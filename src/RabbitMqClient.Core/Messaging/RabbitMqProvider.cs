@@ -70,6 +70,9 @@ namespace RabbitMqClient.Core.Messaging
         public string SubscribeMessage<T>(ChannelResult channelInfo, Action<MessageBase<T>> proccessMessageAction, bool autoAck = true)
         {
             var channel = channelInfo.Channel;
+            if (channel == null)
+                throw new NullReferenceException(nameof(channel));
+
             var consumer = new EventingBasicConsumer(channel);
             consumer.Received += (sender, args) =>
             {
@@ -82,7 +85,7 @@ namespace RabbitMqClient.Core.Messaging
                     CorrelationId = args.BasicProperties.CorrelationId,
                 };
                 if (!autoAck)
-                    channel!.BasicAck(args.DeliveryTag, false);
+                    channel.BasicAck(args.DeliveryTag, false);
                 proccessMessageAction(result);
             };
             return channel.BasicConsume(queue: channelInfo.QueneName, autoAck: autoAck, consumer);
