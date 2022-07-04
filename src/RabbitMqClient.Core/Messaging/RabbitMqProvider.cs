@@ -65,12 +65,25 @@ namespace RabbitMqClient.Core.Messaging
                 );
         }
 
-        public EventingBasicConsumer GetBasicConsumer(ChannelResult channelInfo, bool autoAck = true)
+        public void SubscribeMessage<T>(ChannelResult channelInfo, Action<MessageBase<T>> getMessageFunc, bool autoAck = true)
         {
             var channel = channelInfo.Channel;
             var consumer = new EventingBasicConsumer(channel);
             channel.BasicConsume(queue: channelInfo.QueneName, autoAck: autoAck, consumer);
-            return consumer;
+            consumer.Received += (sender, args) =>
+            {
+                var bodyArray = args.Body.ToArray();
+                string bodyString = Encoding.UTF8.GetString(bodyArray);
+                var messageBody = JsonConvert.DeserializeObject<T>(bodyString);
+                var result = new MessageBase<T>()
+                {
+                    Body = messageBody!,
+                    CorrelationId = args.BasicProperties.CorrelationId,
+                };
+                if (!autoAck)
+                    channel!.BasicAck(args.DeliveryTag, false);
+                getMessageFunc(result);
+            };
         }
     }
 }

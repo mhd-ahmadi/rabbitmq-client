@@ -1,5 +1,7 @@
 using Newtonsoft.Json.Linq;
 using RabbitMqClient.Core.Messaging;
+using RabbitMqClient.Core.Models;
+using RabbitMqClient.WorkerService.Subscriber.Messages;
 using System.Text;
 
 namespace RabbitMqClient.WorkerService.Subscriber
@@ -26,23 +28,17 @@ namespace RabbitMqClient.WorkerService.Subscriber
             var rabbitProvider = scope.ServiceProvider.GetRequiredService<IRabbitMqProvider>();
 
             var channelResult = rabbitProvider.CreateChannel("ex:order", "direct", "order.created", "order.created");
-            var consumer = rabbitProvider.GetBasicConsumer(channelResult, autoAck: true);
-
-            consumer.Received += (ch, ea) =>
+            rabbitProvider.SubscribeMessage<OrderCreatedMessage>(channelResult, (message) =>
             {
-                Console.WriteLine($"\n----- New Order Created -----");
-                string body = Encoding.UTF8.GetString(ea.Body.ToArray());
-                JObject parsed = JObject.Parse(body);
-                foreach (var pair in parsed)
-                {
-                    Console.WriteLine("{0}: {1}", pair.Key, pair.Value);
-                }
-                Console.WriteLine($"_CorrelationId: {ea.BasicProperties.CorrelationId}");
-                Console.WriteLine("******************************");
+                Console.WriteLine("\n---------- New message recieved! ----------");
 
-                // if you want to acknowledge message manually
-                //channelResult.Channel!.BasicAck(ea.DeliveryTag, true);
-            };
+                Console.WriteLine($"{nameof(OrderCreatedMessage.OrderId)}: {message.Body.OrderId}");
+                Console.WriteLine($"{nameof(OrderCreatedMessage.OrderTotal)}: {message.Body.OrderTotal}");
+                Console.WriteLine($"{nameof(OrderCreatedMessage.OrderDate)}: {message.Body.OrderDate}");
+                Console.WriteLine($"_CorrelationId: {message.CorrelationId}");
+
+                Console.WriteLine("*********************************************");
+            });
 
             return Task.CompletedTask;
         }
