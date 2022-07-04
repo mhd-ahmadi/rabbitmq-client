@@ -29,7 +29,7 @@ namespace RabbitMqClient.Core.Messaging
         /// </summary>
         /// <typeparam name="T">The typeof message</typeparam>
         /// <param name="channelInfo">The information of channel create on CreateChannel method</param>
-        /// <param name="getMessageFunc">A function for calling after getting response</param>
+        /// <param name="processMessageAction">An action for calling after getting response</param>
         /// <param name="autoAck">Set status of acknowledege the message</param>
         /// <returns>Basic consume string result</returns>
         string SubscribeMessage<T>(ChannelResult channelInfo, Action<MessageBase<T>> processMessageAction, bool autoAck = true);
