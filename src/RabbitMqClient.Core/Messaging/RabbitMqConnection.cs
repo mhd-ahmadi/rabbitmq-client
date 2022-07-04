@@ -3,7 +3,7 @@ using RabbitMQ.Client;
 
 namespace RabbitMqClient.Core.Messaging
 {
-    public class RabbitMqConnection : IRabbitMqConnection
+    internal class RabbitMqConnection : IRabbitMqConnection
     {
         private readonly IConfiguration _configuration;
 

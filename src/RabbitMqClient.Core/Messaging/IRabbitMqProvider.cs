@@ -13,7 +13,7 @@ namespace RabbitMqClient.Core.Messaging
         /// <param name="exchangeType">Type of exchange [direct, fanout, topic, header]</param>
         /// <param name="queueName">The name of queue</param>
         /// <param name="routingKey">The routing of queue</param>
-        /// <returns></returns>
+        /// <returns>The channel result info</returns>
         ChannelResult CreateChannel(string exchangeName, string exchangeType, string queueName, string routingKey = "");
 
         /// <summary>
@@ -31,6 +31,7 @@ namespace RabbitMqClient.Core.Messaging
         /// <param name="channelInfo">The information of channel create on CreateChannel method</param>
         /// <param name="getMessageFunc">A function for calling after getting response</param>
         /// <param name="autoAck">Set status of acknowledege the message</param>
-        void SubscribeMessage<T>(ChannelResult channelInfo, Action<MessageBase<T>> getMessageFunc, bool autoAck = true);
+        /// <returns>Basic consume string result</returns>
+        string SubscribeMessage<T>(ChannelResult channelInfo, Action<MessageBase<T>> processMessageAction, bool autoAck = true);
     }
 }

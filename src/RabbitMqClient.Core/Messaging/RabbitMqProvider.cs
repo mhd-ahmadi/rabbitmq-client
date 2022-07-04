@@ -6,7 +6,7 @@ using System.Text;
 
 namespace RabbitMqClient.Core.Messaging
 {
-    public class RabbitMqProvider : IRabbitMqProvider
+    internal class RabbitMqProvider : IRabbitMqProvider
     {
         private readonly IRabbitMqConnection _rabbitMqConnection;
         private readonly IConnection _connection;
@@ -38,6 +38,8 @@ namespace RabbitMqClient.Core.Messaging
                 exchange: exchangeName,
                 routingKey: routingKey);
 
+            channel.BasicQos(prefetchSize: 0, prefetchCount: 1, global: false);
+
             return new ChannelResult(channel) { ExchangeName = exchangeName, QueneName = queueName, RoutingKey = routingKey };
         }
 
@@ -65,11 +67,10 @@ namespace RabbitMqClient.Core.Messaging
                 );
         }
 
-        public void SubscribeMessage<T>(ChannelResult channelInfo, Action<MessageBase<T>> getMessageFunc, bool autoAck = true)
+        public string SubscribeMessage<T>(ChannelResult channelInfo, Action<MessageBase<T>> proccessMessageAction, bool autoAck = true)
         {
             var channel = channelInfo.Channel;
             var consumer = new EventingBasicConsumer(channel);
-            channel.BasicConsume(queue: channelInfo.QueneName, autoAck: autoAck, consumer);
             consumer.Received += (sender, args) =>
             {
                 var bodyArray = args.Body.ToArray();
@@ -82,8 +83,9 @@ namespace RabbitMqClient.Core.Messaging
                 };
                 if (!autoAck)
                     channel!.BasicAck(args.DeliveryTag, false);
-                getMessageFunc(result);
+                proccessMessageAction(result);
             };
+            return channel.BasicConsume(queue: channelInfo.QueneName, autoAck: autoAck, consumer);
         }
     }
 }
